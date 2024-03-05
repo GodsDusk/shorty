@@ -1,5 +1,5 @@
 from flask import Flask , request , jsonify , make_response
-import MySQLdb
+import pymysql
 import config
 from check_encode import random_token , url_check
 from display_list import list_data
@@ -43,7 +43,7 @@ def create_short_url():
 					else:
 						tag_url = ''
 
-				conn = MySQLdb.connect(host , user , passwrd , db)
+				conn = pymysql.connect(host , user , passwrd , db)
 				cursor = conn.cursor()
 				check_row = "SELECT S_URL FROM WEB_URL WHERE S_URL = %s FOR UPDATE"
 				cursor.execute(check_row,(token_string,))
@@ -91,7 +91,7 @@ def retrieve_short_url():
 	if request.method == 'GET':
 		if 'custom' in request.args:
 			token_string = request.args['custom']
-			conn = MySQLdb.connect(host , user , passwrd , db)
+			conn = pymysql.connect(host , user , passwrd , db)
 			cursor = conn.cursor()
 			check_row = "SELECT S_URL FROM WEB_URL WHERE S_URL = %s FOR UPDATE"
 			cursor.execute(check_row,(token_string,))

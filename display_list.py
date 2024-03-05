@@ -1,6 +1,6 @@
 import sqlite3
 import config
-import MySQLdb
+import pymysql
 
 
 # MySQL configurations
@@ -17,7 +17,7 @@ def list_data(shorty_url):
 		Takes short_url for input.
 		Returns counter , browser , platform ticks. 
 	"""
-	conn = MySQLdb.connect(host , user , passwrd, db)
+	conn = pymysql.connect(host , user , passwrd, db)
 	cursor = conn.cursor()
 	su =[shorty_url]
 	info_sql = "SELECT URL , S_URL ,TAG FROM WEB_URL WHERE S_URL= %s; "
@@ -26,7 +26,7 @@ def list_data(shorty_url):
 	platform_sql = "SELECT ANDROID , IOS , WINDOWS, LINUX , MAC , OTHER_PLATFORM FROM WEB_URL WHERE S_URL = %s;"	
 	
 	
-	# MySQLdb's execute() function expects a list
+	# PyMySQL's execute() function expects a list
 	# of objects to be converted so we use [arg ,]
 	# But for sqlite ( args,) works. 
 	

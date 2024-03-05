@@ -1,12 +1,13 @@
 #!/usr/bin/env python2.7
 
+import importlib
 import sys
 import os
 
 # Flask Import
 from flask import Flask , request , redirect , render_template , url_for 
 from flask import jsonify , abort , make_response 
-import MySQLdb
+import pymysql
 
 # Toekn and URL check import
 from check_encode import random_token , url_check
@@ -25,7 +26,7 @@ import traceback
 
 # Setting UTF-8 encoding
 
-reload(sys)
+importlib.reload(sys)
 sys.setdefaultencoding('UTF-8')
 os.putenv('LANG', 'en_US.UTF-8')
 os.putenv('LC_ALL', 'en_US.UTF-8')
@@ -53,7 +54,7 @@ def analytics(short_url):
 @app.route('/' , methods=['GET' , 'POST'])
 def index():
 
-	conn = MySQLdb.connect(host , user , passwrd, db)
+	conn = pymysql.connect(host , user , passwrd, db)
 	cursor = conn.cursor()
 	
 	# Return the full table to displat on index.
@@ -106,7 +107,7 @@ def index():
 @app.route('/<short_url>')
 def reroute(short_url):
 
-	conn = MySQLdb.connect(host , user , passwrd, db)
+	conn = pymysql.connect(host , user , passwrd, db)
 	cursor = conn.cursor()
 	platform = request.user_agent.platform
 	browser =  request.user_agent.browser
@@ -132,7 +133,7 @@ def reroute(short_url):
 
 	try:
 		new_url = cursor.fetchone()[0]
-		print new_url
+		print(new_url)
 		# Update Counters 
 		
 		counter_sql = "\
@@ -159,7 +160,7 @@ def search():
 	if s_tag == "":
 		return render_template('index.html', error = "Please enter a search term")
 	else:
-		conn = MySQLdb.connect(host , user , passwrd, db)
+		conn = pymysql.connect(host , user , passwrd, db)
 		cursor = conn.cursor()
 		
 		search_tag_sql = "SELECT * FROM WEB_URL WHERE TAG = %s" 
