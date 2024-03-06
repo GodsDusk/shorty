@@ -1,7 +1,7 @@
 from flask import Flask , request , jsonify , make_response
 import pymysql
 import config
-from check_encode import random_token , url_check
+from utils import random_token , url_check
 from display_list import list_data
 
 shorty_api = Flask(__name__)

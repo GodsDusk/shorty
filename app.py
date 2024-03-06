@@ -58,8 +58,8 @@ def index():
 @app.route('/<short_url>')
 def reroute(short_url):
     with get_db_connection() as conn, conn.cursor() as cursor:
-        platform = request.user_agent.platform
-        browser = request.user_agent.browser
+        platform = request.user_agent.platform or 'other'
+        browser = request.user_agent.browser or 'other'
         browser_dict = {'firefox': 0, 'chrome': 0, 'safari': 0, 'other': 0}
         platform_dict = {'windows': 0, 'iphone': 0,
                          'android': 0, 'linux': 0, 'macos': 0, 'other': 0}
