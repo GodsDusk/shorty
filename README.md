@@ -27,24 +27,26 @@ This project requires Flask and PyMySQL.
 And MySQLdb python module for connection.
 You can install it using the following commands.
 
-```
+```bash
 pip install flask
 
 ```
 
 For mysql as backend
 
-```
+```bash
 sudo apt install mysql-server
 
 sudo apt-get install libmysqlclient-dev
 
 pip install PyMySQL
+
+sudo service mysql start
 ```
 
 Now run the following command to create the MySQL table
 
-```
+```bash
 python ./create_table.py
 ```
 
