@@ -1,42 +1,27 @@
-import os
 import logging
 import traceback
 from logging.handlers import RotatingFileHandler
 from time import strftime
 
 from flask import Flask, request, redirect, render_template, make_response
-import pymysql
 
-from check_encode import random_token, url_check
-from display_list import list_data
-import config
+from utils import get_db_connection, list_data, random_token, url_check
 
-# Set UTF-8 encoding environment variables
-os.environ['LANG'] = 'en_US.UTF-8'
-os.environ['LC_ALL'] = 'en_US.UTF-8'
 
-# Initialize Flask app and configuration
 app = Flask(__name__)
 app.config.from_object('config')
 
-# Set global variables for configuration
-shorty_host = config.domain
-db_config = {
-    "host": config.host,
-    "user": config.user,
-    "password": config.passwrd,
-    "db": config.db
-}
 
-def get_db_connection():
-    """Create and return a new database connection."""
-    return pymysql.connect(**db_config)
+shorty_host = "http://localhost:8080/"
+
 
 @app.route('/analytics/<short_url>')
 def analytics(short_url):
-    info_fetch, counter_fetch, browser_fetch, platform_fetch = list_data(short_url)
+    info_fetch, counter_fetch, browser_fetch, platform_fetch = list_data(
+        short_url)
     return render_template("data.html", host=shorty_host, info=info_fetch, counter=counter_fetch,
                            browser=browser_fetch, platform=platform_fetch)
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -53,9 +38,11 @@ def index():
             token_string = random_token() if not custom_suff else custom_suff
 
             if og_url and url_check(og_url):
-                cursor.execute("SELECT S_URL FROM WEB_URL WHERE S_URL = %s FOR UPDATE", (token_string,))
+                cursor.execute(
+                    "SELECT S_URL FROM WEB_URL WHERE S_URL = %s FOR UPDATE", (token_string,))
                 if cursor.fetchone() is None:
-                    cursor.execute("INSERT INTO WEB_URL(URL, S_URL, TAG) VALUES(%s, %s, %s)", (og_url, token_string, tag_url))
+                    cursor.execute(
+                        "INSERT INTO WEB_URL(URL, S_URL, TAG) VALUES(%s, %s, %s)", (og_url, token_string, tag_url))
                     conn.commit()
                     return render_template('index.html', shorty_url=f"{shorty_host}{token_string}")
                 else:
@@ -67,19 +54,22 @@ def index():
 
         return render_template('index.html', table=result_all_fetch, host=shorty_host)
 
+
 @app.route('/<short_url>')
 def reroute(short_url):
     with get_db_connection() as conn, conn.cursor() as cursor:
         platform = request.user_agent.platform
         browser = request.user_agent.browser
         browser_dict = {'firefox': 0, 'chrome': 0, 'safari': 0, 'other': 0}
-        platform_dict = {'windows': 0, 'iphone': 0, 'android': 0, 'linux': 0, 'macos': 0, 'other': 0}
+        platform_dict = {'windows': 0, 'iphone': 0,
+                         'android': 0, 'linux': 0, 'macos': 0, 'other': 0}
 
         # Increment browser and platform counters
         browser_dict[browser] = browser_dict.get(browser, 0) + 1
         platform_dict[platform] = platform_dict.get(platform, 0) + 1
 
-        cursor.execute("SELECT URL FROM WEB_URL WHERE S_URL = %s;", (short_url,))
+        cursor.execute(
+            "SELECT URL FROM WEB_URL WHERE S_URL = %s;", (short_url,))
         try:
             new_url = cursor.fetchone()[0]
             update_counters(cursor, short_url, browser_dict, platform_dict)
@@ -88,6 +78,7 @@ def reroute(short_url):
         except Exception:
             return render_template('404.html'), 404
 
+
 def update_counters(cursor, short_url, browser_dict, platform_dict):
     """Update browser and platform counters in the database for the given short_url."""
     counter_sql = """UPDATE WEB_URL SET COUNTER = COUNTER + 1,
@@ -95,8 +86,10 @@ def update_counters(cursor, short_url, browser_dict, platform_dict):
                      ANDROID = ANDROID + %s, IOS = IOS + %s, WINDOWS = WINDOWS + %s, LINUX = LINUX + %s, MAC = MAC + %s, OTHER_PLATFORM = OTHER_PLATFORM + %s
                      WHERE S_URL = %s;"""
     cursor.execute(counter_sql, (browser_dict['chrome'], browser_dict['firefox'], browser_dict['safari'], browser_dict['other'],
-                                 platform_dict['android'], platform_dict['iphone'], platform_dict['windows'], platform_dict['linux'], platform_dict['macos'], platform_dict['other'],
+                                 platform_dict['android'], platform_dict['iphone'], platform_dict[
+                                     'windows'], platform_dict['linux'], platform_dict['macos'], platform_dict['other'],
                                  short_url))
+
 
 @app.route('/search', methods=['GET', 'POST'])
 def search():
@@ -109,18 +102,23 @@ def search():
         search_tag_fetch = cursor.fetchall()
         return render_template('search.html', host=shorty_host, search_tag=s_tag, table=search_tag_fetch)
 
+
 @app.after_request
 def after_request(response):
     timestamp = strftime('[%Y-%b-%d %H:%M]')
-    logger.error('%s %s %s %s %s %s', timestamp, request.remote_addr, request.method, request.scheme, request.full_path, response.status)
+    logger.error('%s %s %s %s %s %s', timestamp, request.remote_addr,
+                 request.method, request.scheme, request.full_path, response.status)
     return response
+
 
 @app.errorhandler(Exception)
 def exceptions(e):
     tb = traceback.format_exc()
     timestamp = strftime('[%Y-%b-%d %H:%M]')
-    logger.error('%s %s %s %s %s 5xx INTERNAL SERVER ERROR\n%s', timestamp, request.remote_addr, request.method, request.scheme, request.full_path, tb)
+    logger.error('%s %s %s %s %s 5xx INTERNAL SERVER ERROR\n%s', timestamp,
+                 request.remote_addr, request.method, request.scheme, request.full_path, tb)
     return make_response(e, 405)
+
 
 def setup_logger():
     """Configure and return a logger instance."""
@@ -129,6 +127,7 @@ def setup_logger():
     logger.setLevel(logging.ERROR)
     logger.addHandler(handler)
     return logger
+
 
 logger = setup_logger()
 
